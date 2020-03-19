@@ -11,6 +11,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-         $this->call(StateSeeder::class);
+        $this->call(StateSeeder::class);
+        $this->call(TriggerWordsSeeder::class);
+        $this->call(PossibleStatesSeeder::class);
     }
 }

@@ -13,7 +13,10 @@ class StateSeeder extends Seeder
     {
         $values = [];
 
-        $values[] = ['name'=>'Начало','message'=>'welcome'];
+        $values[] = ['id'=>1,'name'=>'Начало','message'=>'welcome message'];
+        $values[] = ['id'=>2,'name'=>'Главный экран','message'=>'main screen instructions'];
+        $values[] = ['id'=>3,'name'=>'Начало флоу чат моего дома','message'=>'house chat step 1. Request location'];
+        $values[] = ['id'=>4,'name'=>'Начало флоу нужна помощь','message'=>'Текстовка нужна помощь. Выберите какая помощь необходима'];
 
         \Illuminate\Support\Facades\DB::table('states')->insert($values);
     }

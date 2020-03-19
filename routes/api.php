@@ -28,7 +28,7 @@ Route::post('vkBot',function (Request $request){
             case 'message_new':
                 echo 'ok';
                 $vkMassagesHandler = app(\App\Handlers\VkMessageHandler::class);
-                $vkMassagesHandler->handleMessage($request);
+                $vkMassagesHandler->handleMessageRequest($request);
                 break;
         }
     } else {
