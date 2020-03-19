@@ -13,7 +13,7 @@ class VkMessageHandler
     function handleMessage(Request $request)
     {
         $object = $request->input('object');
-        $vkUserId = $object['user_id'];
+        $vkUserId = $object['from_id'];
         $foundUser = User::where('vk_user_id', $vkUserId)->get()->first();
         if ($foundUser == null) {
             $newUser = new User();
@@ -28,8 +28,6 @@ class VkMessageHandler
                 $this->sendStateMessage($foundUser);
                 break;
         }
-
-        dd($foundUser);
     }
 
     function sendStateMessage($user)
@@ -50,7 +48,6 @@ class VkMessageHandler
                 'message' => $message,
             ]
         ]);
-        echo 'message send userId ' . $vkUserId . ' $message ' . $message;
     }
 
 }
