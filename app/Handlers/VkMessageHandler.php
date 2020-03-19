@@ -40,12 +40,25 @@ class VkMessageHandler
         $gluszzClient = new Client([
             'base_uri' => 'https://api.vk.com/method/',
         ]);
+        $buttonsObject = [
+            'one_time' => false,
+            'buttons' => [
+                [
+                    'action' => 'text',
+                    'label' => 'label'
+                ],
+            ],
+            'inline' => false
+        ];
+        $keyboardjson = json_encode($buttonsObject);
+//        dd($buttonsObject, json_encode($buttonsObject));
         $get = $gluszzClient->get('messages.send', [
             'query' => [
                 'access_token' => env('VK_GROUP_TOKEN'),
                 'v' => '5.69',
                 'user_id' => $vkUserId,
                 'message' => $message,
+                'keyboard'=>$keyboardjson,
             ]
         ]);
     }
