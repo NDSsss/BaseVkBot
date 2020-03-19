@@ -28,7 +28,7 @@ class VkMessageHandler
                 $this->sendStateMessage($foundUser);
                 break;
         }
-        $foundUser->random_id = $foundUser->random_id + 1;
+        $foundUser->update(['random_id'=>$foundUser->random_id + 1]);
     }
 
     function sendStateMessage($user)
