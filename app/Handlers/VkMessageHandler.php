@@ -13,7 +13,7 @@ class VkMessageHandler
     function handleMessage(Request $request)
     {
         $object = $request->input('object');
-        $vkUserId = $object['from_id'];
+        $vkUserId = $object['message']['from_id'];
         $foundUser = User::where('vk_user_id', $vkUserId)->get()->first();
         if ($foundUser == null) {
             $newUser = new User();
@@ -28,14 +28,15 @@ class VkMessageHandler
                 $this->sendStateMessage($foundUser);
                 break;
         }
+        $foundUser->random_id = $foundUser->random_id + 1;
     }
 
     function sendStateMessage($user)
     {
-        $this->sendMessageToUser($user->vk_user_id, $user->state->message);
+        $this->sendMessageToUser($user->vk_user_id, $user->state->message, $user->random_id);
     }
 
-    private function sendMessageToUser($vkUserId, $message)
+    private function sendMessageToUser($vkUserId, $message, $randomId)
     {
         $gluszzClient = new Client([
             'base_uri' => 'https://api.vk.com/method/',
@@ -44,8 +45,13 @@ class VkMessageHandler
             'one_time' => false,
             'buttons' => [
                 [
-                    'action' => 'text',
-                    'label' => 'label'
+                    [
+                        'action' => [
+                            'type' => 'text',
+                            'label' => 'label'
+                        ],
+                        'color' => 'secondary'
+                    ],
                 ],
             ],
             'inline' => false
@@ -55,10 +61,11 @@ class VkMessageHandler
         $get = $gluszzClient->get('messages.send', [
             'query' => [
                 'access_token' => env('VK_GROUP_TOKEN'),
-                'v' => '5.69',
+                'v' => '5.103',
+                'random_id' => $randomId,
                 'user_id' => $vkUserId,
                 'message' => $message,
-                'keyboard'=>$keyboardjson,
+                'keyboard' => $keyboardjson,
             ]
         ]);
     }

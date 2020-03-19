@@ -19,6 +19,7 @@ class CreateUsersTable extends Migration
             $table->string('name')->nullable();
             $table->string('city')->nullable();
             $table->unsignedBigInteger('state_id')->default(1);
+            $table->unsignedBigInteger('random_id')->default(1);
 
             $table->foreign('state_id')->references('id')->on('states');
         });
