@@ -16,6 +16,7 @@ class CreateTriggerWordsTable extends Migration
         Schema::create('trigger_words', function (Blueprint $table) {
             $table->id();
             $table->string('word');
+            $table->string('type');
             $table->unsignedBigInteger('state_id');
 
             $table->foreign('state_id')->references('id')->on('states');

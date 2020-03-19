@@ -15,7 +15,7 @@ class User extends Model
      * @var array
      */
     protected $fillable = [
-        'name', 'vk_user_id', 'city', 'state', 'random_id',
+        'name', 'vk_user_id', 'city', 'state', 'random_id', 'coordinates',
     ];
 
     public function state(){

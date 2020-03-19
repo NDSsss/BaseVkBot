@@ -18,6 +18,7 @@ class CreateUsersTable extends Migration
             $table->integer('vk_user_id')->nullable()->unique();
             $table->string('name')->nullable();
             $table->string('city')->nullable();
+            $table->string('coordinates')->nullable();
             $table->unsignedBigInteger('state_id')->default(1);
             $table->unsignedBigInteger('random_id')->default(1);
 

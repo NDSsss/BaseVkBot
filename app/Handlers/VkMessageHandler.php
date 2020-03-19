@@ -16,11 +16,11 @@ class VkMessageHandler
 {
     function handleMessageRequest(Request $request)
     {
-        Log::debug('handleMessageRequest'.json_encode($request));
+        Log::debug('handleMessageRequest' . json_encode($request));
         $object = $request->input('object');
         $vkUserId = $object['message']['from_id'];
         $foundUser = User::where('vk_user_id', $vkUserId)->get()->first();
-        $messageText = $object['message']['text'];
+        $message = $object['message'];
         if ($foundUser == null) {
             $newUser = new User();
             $newUser->vk_user_id = $vkUserId;
@@ -29,17 +29,23 @@ class VkMessageHandler
             }
         }
 
-        Log::debug('$foundUser '.json_encode($foundUser));
+        Log::debug('$foundUser ' . json_encode($foundUser));
         switch ($foundUser->state_id) {
+            case 3:
+                if (key_exists('geo', $message)) {
+                    $this->handleGeoMessage($foundUser, $message['geo']);
+                    break;
+                }
             default:
-                $this->handleUserMessage($foundUser, $messageText);
+                $this->handleUserMessage($foundUser, $message);
                 break;
         }
     }
 
     function handleUserMessage($user, $receivedMessage)
     {
-        Log::debug('handleUserMessage $user'.json_encode($user).' $receivedMessage '.json_encode($receivedMessage));
+        $receivedMessage = $receivedMessage['text'];
+        Log::debug('handleUserMessage $user' . json_encode($user) . ' $receivedMessage ' . json_encode($receivedMessage));
         $userState = $user->state;
         $triggerWords = $this->generateTriggerWordsForState($userState->id);
         $nexStateId = $triggerWords->where('word', $receivedMessage);
@@ -50,9 +56,18 @@ class VkMessageHandler
         }
     }
 
+    function handleGeoMessage($user, $geo)
+    {
+        Log::debug('handleGeoMessage $user' . json_encode($user) . ' $geo ' . json_encode($geo));
+        $coordinates = $geo['coordinates'][''].','.$geo['coordinates'][''];
+        $user->coordinates = $coordinates;
+        $user->save();
+        $userState = $user->state;
+    }
+
     private function moveUserToState($user, $newStateId)
     {
-        Log::debug('moveUserToState $user'.json_encode($user).' $newStateId '.json_encode($newStateId));
+        Log::debug('moveUserToState $user' . json_encode($user) . ' $newStateId ' . json_encode($newStateId));
         $user->state_id = $newStateId;
         $newState = State::query()->where('id', '=', $newStateId)->get()->first();
         if ($this->sendMessageToUser($user, $newState->message, $user->random_id, $newStateId)) {
@@ -76,9 +91,9 @@ class VkMessageHandler
                 'keyboard' => $keyboardjson,
             ]
         ];
-        Log::debug('sendMessageToUser pre get $user'.json_encode($user).' $query '.json_encode($query));
+        Log::debug('sendMessageToUser pre get $user' . json_encode($user) . ' $query ' . json_encode($query));
         $get = $gluszzClient->get('messages.send', $query);
-        Log::debug('sendMessageToUser after get $user'.json_encode($user).' $get->getBody() '.json_encode($get->getBody()));
+        Log::debug('sendMessageToUser after get $user' . json_encode($user) . ' $get->getStatusCode() ' . json_encode($get->getStatusCode()));
         if ($get->getStatusCode() == 200) {
             $user->update(['random_id' => $user->random_id + 1]);
             return true;
@@ -89,26 +104,37 @@ class VkMessageHandler
 
     private function generateKeyboardJson($newStateId)
     {
-        $possibleStates = $this->generateTriggerWordsForState($newStateId)
-            ->map(function ($value, $key) {
-                return $value->word;
-            });
+        $possibleStates = $this->generateTriggerWordsForState($newStateId);
         $buttons = [];
         foreach ($possibleStates as $currState) {
-            $buttons[] = [
-                'action' => [
-                    'type' => 'text',
-                    'label' => $currState
-                ],
-                'color' => 'secondary'
-            ];
+            switch($currState->type){
+                case 'text':
+                    $buttons[] = [[
+                        'action' => [
+                            'type' => $currState->type,
+                            'label' => $currState->word
+                        ],
+                        'color' => 'secondary'
+                    ]];
+                    break;
+                case 'location':
+                    $buttons[] = [[
+                        'action' => [
+                            'type' => $currState->type
+                        ]
+                    ]];
+                    break;
+            }
 
         }
         $buttonsObject = [
             'one_time' => false,
-            'buttons' => [$buttons],
+            'buttons' => $buttons,
             'inline' => false
         ];
+        $preparedBtnsJson = json_encode($buttonsObject);
+        Log::debug('generateKeyboardJson $preparedBtnsJson' . json_encode($preparedBtnsJson));
+        echo json_encode($buttonsObject);
         return json_encode($buttonsObject);
     }
 
