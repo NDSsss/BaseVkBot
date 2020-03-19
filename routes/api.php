@@ -19,6 +19,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::post('vkBot',function (Request $request){
+    \Illuminate\Support\Facades\Log::debug('vk bot'.json_encode($request->input()));
     if($request->input('group_id') == env('VK_GROUP_ID')){
         switch ($request->input('type')){
             case 'confirmation':
