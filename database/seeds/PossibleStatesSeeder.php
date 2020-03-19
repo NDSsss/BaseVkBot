@@ -18,6 +18,8 @@ class PossibleStatesSeeder extends Seeder
         $values[] = ['current_state_id'=>2,'possible_state_id'=>4,];
         $values[] = ['current_state_id'=>3,'possible_state_id'=>2,];
         $values[] = ['current_state_id'=>3,'possible_state_id'=>5,];
+        $values[] = ['current_state_id'=>5,'possible_state_id'=>2,];
+        $values[] = ['current_state_id'=>6,'possible_state_id'=>2,];
         $values[] = ['current_state_id'=>4,'possible_state_id'=>2,];
 
         \Illuminate\Support\Facades\DB::table('possible_states')->insert($values);

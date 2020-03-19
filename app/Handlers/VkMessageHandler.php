@@ -36,6 +36,14 @@ class VkMessageHandler
                     $this->handleGeoMessage($foundUser, $message['geo']);
                     break;
                 }
+                $this->handleUserMessage($foundUser, $message);
+                break;
+            case 6:
+                if($message['text']!='Начало'){
+                    $this->saveChatLink($message['text']);
+                }
+                $this->moveUserToState($foundUser, 2);
+                break;
             default:
                 $this->handleUserMessage($foundUser, $message);
                 break;
@@ -48,29 +56,41 @@ class VkMessageHandler
         Log::debug('handleUserMessage $user' . json_encode($user) . ' $receivedMessage ' . json_encode($receivedMessage));
         $userState = $user->state;
         $triggerWords = $this->generateTriggerWordsForState($userState->id);
+//        dd($triggerWords,$receivedMessage);
         $nexStateId = $triggerWords->where('word', $receivedMessage);
         if ($nexStateId->isNotEmpty()) {
             $this->moveUserToState($user, $nexStateId->first()->state_id);
         } else {
-
+            Log::debug('handleUserMessage No next state trigger word $user' . json_encode($user) . ' $receivedMessage ' . json_encode($receivedMessage));
         }
     }
 
     function handleGeoMessage($user, $geo)
     {
         Log::debug('handleGeoMessage $user' . json_encode($user) . ' $geo ' . json_encode($geo));
-        $coordinates = $geo['coordinates'][''].','.$geo['coordinates'][''];
+        $coordinates = $geo['coordinates']['latitude'] . ',' . $geo['coordinates']['longitude'];
         $user->coordinates = $coordinates;
         $user->save();
         $userState = $user->state;
+//        $chatLink = "someLink";
+        $chatLink = null;
+        if ($chatLink) {
+            $this->moveUserToState($user, 5, $chatLink);
+        } else {
+            $this->moveUserToState($user, 6);
+        }
     }
 
-    private function moveUserToState($user, $newStateId)
+    private function saveChatLink($link){
+        echo 'saveChatLink '.$link;
+    }
+
+    private function moveUserToState($user, $newStateId, $extraMessage = '')
     {
         Log::debug('moveUserToState $user' . json_encode($user) . ' $newStateId ' . json_encode($newStateId));
         $user->state_id = $newStateId;
         $newState = State::query()->where('id', '=', $newStateId)->get()->first();
-        if ($this->sendMessageToUser($user, $newState->message, $user->random_id, $newStateId)) {
+        if ($this->sendMessageToUser($user, $newState->message . ' ' . $extraMessage, $user->random_id, $newStateId)) {
             $user->save();
         };
     }
@@ -93,7 +113,7 @@ class VkMessageHandler
         ];
         Log::debug('sendMessageToUser pre get $user' . json_encode($user) . ' $query ' . json_encode($query));
         $get = $gluszzClient->get('messages.send', $query);
-        Log::debug('sendMessageToUser after get $user' . json_encode($user) . ' $get->getStatusCode() ' . json_encode($get->getStatusCode()));
+        Log::debug('sendMessageToUser after get $user' . json_encode($user) . ' $get->getBody() ' . json_encode($get->getBody()->getContents()));
         if ($get->getStatusCode() == 200) {
             $user->update(['random_id' => $user->random_id + 1]);
             return true;
@@ -107,7 +127,7 @@ class VkMessageHandler
         $possibleStates = $this->generateTriggerWordsForState($newStateId);
         $buttons = [];
         foreach ($possibleStates as $currState) {
-            switch($currState->type){
+            switch ($currState->type) {
                 case 'text':
                     $buttons[] = [[
                         'action' => [
@@ -134,7 +154,6 @@ class VkMessageHandler
         ];
         $preparedBtnsJson = json_encode($buttonsObject);
         Log::debug('generateKeyboardJson $preparedBtnsJson' . json_encode($preparedBtnsJson));
-        echo json_encode($buttonsObject);
         return json_encode($buttonsObject);
     }
 
