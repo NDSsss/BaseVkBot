@@ -10,11 +10,13 @@ use App\User;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class VkMessageHandler
 {
     function handleMessageRequest(Request $request)
     {
+        Log::debug('handleMessageRequest'.json_encode($request));
         $object = $request->input('object');
         $vkUserId = $object['message']['from_id'];
         $foundUser = User::where('vk_user_id', $vkUserId)->get()->first();
@@ -27,6 +29,7 @@ class VkMessageHandler
             }
         }
 
+        Log::debug('$foundUser '.json_encode($foundUser));
         switch ($foundUser->state_id) {
             default:
                 $this->handleUserMessage($foundUser, $messageText);
@@ -36,6 +39,7 @@ class VkMessageHandler
 
     function handleUserMessage($user, $receivedMessage)
     {
+        Log::debug('handleUserMessage $user'.json_encode($user).' $receivedMessage '.json_encode($receivedMessage));
         $userState = $user->state;
         $triggerWords = $this->generateTriggerWordsForState($userState->id);
         $nexStateId = $triggerWords->where('word', $receivedMessage);
@@ -48,6 +52,7 @@ class VkMessageHandler
 
     private function moveUserToState($user, $newStateId)
     {
+        Log::debug('moveUserToState $user'.json_encode($user).' $newStateId '.json_encode($newStateId));
         $user->state_id = $newStateId;
         $newState = State::query()->where('id', '=', $newStateId)->get()->first();
         if ($this->sendMessageToUser($user, $newState->message, $user->random_id, $newStateId)) {
@@ -61,7 +66,7 @@ class VkMessageHandler
             'base_uri' => 'https://api.vk.com/method/',
         ]);
         $keyboardjson = $this->generateKeyboardJson($newStateId);
-        $get = $gluszzClient->get('messages.send', [
+        $query = [
             'query' => [
                 'access_token' => env('VK_GROUP_TOKEN'),
                 'v' => '5.103',
@@ -70,7 +75,10 @@ class VkMessageHandler
                 'message' => $message,
                 'keyboard' => $keyboardjson,
             ]
-        ]);
+        ];
+        Log::debug('sendMessageToUser pre get $user'.json_encode($user).' $query '.json_encode($query));
+        $get = $gluszzClient->get('messages.send', $query);
+        Log::debug('sendMessageToUser after get $user'.json_encode($user).' $get->getBody() '.json_encode($get->getBody()));
         if ($get->getStatusCode() == 200) {
             $user->update(['random_id' => $user->random_id + 1]);
             return true;
