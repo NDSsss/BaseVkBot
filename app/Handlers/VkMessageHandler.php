@@ -56,7 +56,7 @@ class VkMessageHandler
         Log::debug('handleUserMessage $user' . json_encode($user) . ' $receivedMessage ' . json_encode($receivedMessage));
         $triggerWords = $this->generateTriggerWordsForState($user->state_id);
         $nexStateId = $triggerWords->where('word', $receivedMessage);
-        dd($triggerWords, $nexStateId);
+        Log::debug('$triggerWords '.json_encode($triggerWords).' $nexStateId. '.json_encode($nexStateId));
         if ($nexStateId->isNotEmpty()) {
             $this->moveUserToState($user, $nexStateId->first()->state_id);
         } else {
