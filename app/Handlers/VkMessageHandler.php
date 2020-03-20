@@ -38,7 +38,7 @@ class VkMessageHandler
                 }
                 $this->handleUserMessage($foundUser, $message);
                 break;
-            case 6:
+            case 7:
                 if($message['text']!='Начало'){
                     $this->saveChatLink($foundUser->coordinates,$message['text']);
                 }
@@ -54,8 +54,7 @@ class VkMessageHandler
     {
         $receivedMessage = $receivedMessage['text'];
         Log::debug('handleUserMessage $user' . json_encode($user) . ' $receivedMessage ' . json_encode($receivedMessage));
-        $userState = $user->state;
-        $triggerWords = $this->generateTriggerWordsForState($userState->id);
+        $triggerWords = $this->generateTriggerWordsForState($user->state_id);
         $nexStateId = $triggerWords->where('word', $receivedMessage);
         if ($nexStateId->isNotEmpty()) {
             $this->moveUserToState($user, $nexStateId->first()->state_id);
@@ -71,7 +70,6 @@ class VkMessageHandler
         $user->coordinates = $coordinates;
         $user->save();
         $userState = $user->state;
-//        $chatLink = "someLink";
         $apiInteractor = new SomeApiInteractor();
         $chatLink = $apiInteractor->getChatLinkForCoordinates($coordinates);
         if ($chatLink) {
@@ -173,6 +171,7 @@ class VkMessageHandler
             ->filter(function ($value, $key) {
                 return $value->id != 1;
             });
+//        dd($userPossibleStates,$triggerWords);
 
         return $triggerWords;
     }
