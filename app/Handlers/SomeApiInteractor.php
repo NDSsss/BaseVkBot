@@ -39,7 +39,7 @@ class SomeApiInteractor
     function saveChatLinkForCoordinates($coordinates, $link)
     {
         $tstUrl = 'https://api.covidarnost.ru/chat/createChat/?data={"coords": "' . $coordinates . '","url":"' . $link . '"}';
-        Log::debug('start save $tstUrl ' . json_encode($tstUrl));
+        Log::debug('start save $coordinates ' . $coordinates . ' $link ' . $link . ' $tstUrl ' . json_encode($tstUrl));
         $gluszzClient = new Client([
             'base_uri' => $tstUrl,
         ]);
