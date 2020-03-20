@@ -43,6 +43,7 @@ class VkMessageHandler
                     $this->saveChatLink($foundUser->coordinates, $message['text']);
                 }
                 $this->moveUserToState($foundUser, 2, '', 'Спасибо! За вами закреплен чат — '.$message['text'] . '
+
 ');
                 break;
             default:
