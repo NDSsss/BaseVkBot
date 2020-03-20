@@ -42,7 +42,8 @@ class VkMessageHandler
                 if ($message['text'] != 'Начало') {
                     $this->saveChatLink($foundUser->coordinates, $message['text']);
                 }
-                $this->moveUserToState($foundUser, 2,'',$message['text'].'\n');
+                $this->moveUserToState($foundUser, 2, '', $message['text'] . '
+');
                 break;
             default:
                 $this->handleUserMessage($foundUser, $message);
