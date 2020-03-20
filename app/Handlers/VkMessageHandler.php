@@ -39,8 +39,8 @@ class VkMessageHandler
                 $this->handleUserMessage($foundUser, $message);
                 break;
             case 7:
-                if($message['text']!='Начало'){
-                    $this->saveChatLink($foundUser->coordinates,$message['text']);
+                if ($message['text'] != 'Начало') {
+                    $this->saveChatLink($foundUser->coordinates, $message['text']);
                 }
                 $this->moveUserToState($foundUser, 2);
                 break;
@@ -56,7 +56,7 @@ class VkMessageHandler
         Log::debug('handleUserMessage $user' . json_encode($user) . ' $receivedMessage ' . json_encode($receivedMessage));
         $triggerWords = $this->generateTriggerWordsForState($user->state_id);
         $nexStateId = $triggerWords->where('word', $receivedMessage);
-        Log::debug('$triggerWords '.json_encode($triggerWords).' $nexStateId. '.json_encode($nexStateId));
+        Log::debug('$triggerWords ' . json_encode($triggerWords) . ' $nexStateId. ' . json_encode($nexStateId));
         if ($nexStateId->isNotEmpty()) {
             $this->moveUserToState($user, $nexStateId->first()->state_id);
         } else {
@@ -81,9 +81,10 @@ class VkMessageHandler
         }
     }
 
-    private function saveChatLink($coordinates,$link){
+    private function saveChatLink($coordinates, $link)
+    {
         $apiInteractor = new SomeApiInteractor();
-        $apiInteractor->saveChatLinkForCoordinates($coordinates,$link);
+        $apiInteractor->saveChatLinkForCoordinates($coordinates, $link);
     }
 
     private function moveUserToState($user, $newStateId, $extraMessage = '')
@@ -125,7 +126,9 @@ class VkMessageHandler
 
     private function generateKeyboardJson($newStateId)
     {
-        $possibleStates = $this->generateTriggerWordsForState($newStateId);
+        $possibleStates = $this->generateTriggerWordsForState($newStateId)->filter(function ($value, $key) {
+            return $value->id > 8;
+        });
         $buttons = [];
         foreach ($possibleStates as $currState) {
             switch ($currState->type) {
