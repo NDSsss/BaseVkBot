@@ -42,7 +42,7 @@ class VkMessageHandler
                 if ($message['text'] != 'Начало') {
                     $this->saveChatLink($foundUser->coordinates, $message['text']);
                 }
-                $this->moveUserToState($foundUser, 2);
+                $this->moveUserToState($foundUser, 2,'',$message['text'].'\n');
                 break;
             default:
                 $this->handleUserMessage($foundUser, $message);
@@ -87,12 +87,12 @@ class VkMessageHandler
         $apiInteractor->saveChatLinkForCoordinates($coordinates, $link);
     }
 
-    private function moveUserToState($user, $newStateId, $extraMessage = '')
+    private function moveUserToState($user, $newStateId, $extraMessage = '', $extraStartMessage = '')
     {
         Log::debug('moveUserToState $user' . json_encode($user) . ' $newStateId ' . json_encode($newStateId));
         $user->state_id = $newStateId;
         $newState = State::query()->where('id', '=', $newStateId)->get()->first();
-        if ($this->sendMessageToUser($user, $newState->message . ' ' . $extraMessage, $user->random_id, $newStateId)) {
+        if ($this->sendMessageToUser($user, $extraStartMessage . ' ' . $newState->message . ' ' . $extraMessage, $user->random_id, $newStateId)) {
             $user->save();
         };
     }
