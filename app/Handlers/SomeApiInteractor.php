@@ -10,43 +10,41 @@ use Illuminate\Support\Facades\Log;
 
 class SomeApiInteractor
 {
-    function getChatLinkForCoordinates($coordinates){
-
+    function getChatLinkForCoordinates($coordinates)
+    {
+        $tstUrl = 'https://api.covidarnost.ru/chat/getChat/?data={"coords": "' . $coordinates . '"}';
         $gluszzClient = new Client([
-            'base_uri' => 'https://api.covidarnost.ru/chat/getChat/',
+            'base_uri' => $tstUrl,
         ]);
-        $query = [
-            'query' => [
-                'data' => '{"coords": "'.$coordinates.'"}'
-            ]
-        ];
         try {
-            $get = $gluszzClient->post('', $query);
+            Log::debug('start $tstUrl ' . json_encode($tstUrl));
+            $get = $gluszzClient->post('');
             $resultCode = $get->getStatusCode();
+            Log::debug('complete $resultCode ' . json_encode($resultCode));
 
-            if($resultCode == 200){
+            if ($resultCode == 200) {
                 $resultBodyString = $get->getBody()->getContents();
-                Log::debug('getChatLinkForCoordinates answer '.$resultBodyString);
-                $resultBodyObj =json_decode($resultBodyString);
+                Log::debug('getChatLinkForCoordinates answer ' . $resultBodyString);
+                $resultBodyObj = json_decode($resultBodyString);
                 return $resultBodyObj->url;
             } else {
                 return null;
             }
-        } catch (ServerException $ex){
+        } catch (ServerException $ex) {
+            Log::debug('catch catch ');
             return null;
         }
     }
 
-    function saveChatLinkForCoordinates($coordinates, $link){
+    function saveChatLinkForCoordinates($coordinates, $link)
+    {
+        $tstUrl = 'https://api.covidarnost.ru/chat/createChat/?data={"coords": "' . $coordinates . '","url":"' . $link . '"}';
+        Log::debug('start save $tstUrl ' . json_encode($tstUrl));
         $gluszzClient = new Client([
-            'base_uri' => 'https://api.covidarnost.ru/chat/createChat/',
+            'base_uri' => $tstUrl,
         ]);
-        $query = [
-            'query' => [
-                'data' => '{"coords": "'.$coordinates.'","url":"'.$link.'"}'
-            ]
-        ];
-        $get = $gluszzClient->post('', $query);
+        $get = $gluszzClient->post('');
+        Log::debug('saved ');
         $resultCode = $get->getStatusCode();
     }
 }
