@@ -22,10 +22,12 @@ class TriggerWordsSeeder extends Seeder
         $values[] = ['id'=>7,'state_id'=>2,'type'=>'text','word'=>'начать'];
         $values[] = ['id'=>8,'state_id'=>2,'type'=>'text','word'=>'start'];
         $values[] = ['id'=>9,'state_id'=>2,'type'=>'text','word'=>'Начало'];
-        $values[] = ['id'=>10,'state_id'=>3,'type'=>'text','word'=>'Хочу помочь'];
+        $values[] = ['id'=>10,'state_id'=>8,'type'=>'text','word'=>'Хочу помочь'];
         $values[] = ['id'=>11,'state_id'=>4,'type'=>'text','word'=>'Памятка о коронавирусе'];
         $values[] = ['id'=>12,'state_id'=>5,'type'=>'location','word'=>'geo'];
         $values[] = ['id'=>13,'state_id'=>7,'type'=>'text','word'=>'Отправить ссылку'];
+        $values[] = ['id'=>13,'state_id'=>3,'type'=>'text','word'=>'Помочь соседям'];
+        $values[] = ['id'=>13,'state_id'=>9,'type'=>'text','word'=>'Инструкция'];
 
         \Illuminate\Support\Facades\DB::table('trigger_words')->insert($values);
     }
