@@ -73,6 +73,7 @@ class VkMessageHandler
         $userState = $user->state;
         $apiInteractor = new SomeApiInteractor();
         $chatLink = $apiInteractor->getChatLinkForCoordinates($coordinates);
+        Log::debug('handleGeoMessage $chatLink' . json_encode($chatLink));
         if ($chatLink) {
             $this->moveUserToState($user, 5, $chatLink);
         } else {
