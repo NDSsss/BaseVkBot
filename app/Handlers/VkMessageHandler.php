@@ -127,7 +127,7 @@ class VkMessageHandler
     private function generateKeyboardJson($newStateId)
     {
         $possibleStates = $this->generateTriggerWordsForState($newStateId)->filter(function ($value, $key) {
-            return $value->id > 8;
+            return $value->id > 7;
         });
         $buttons = [];
         foreach ($possibleStates as $currState) {
