@@ -15,7 +15,11 @@ use Illuminate\Support\Facades\Route;
 */
 
 //Route::middleware('auth:api')->get('/user', function (Request $request) {
-//    return $request->user();
+//    return 'work';
 //});
+
+Route::post('test',function (){
+    return'work';
+});
 
 Route::post('vkBot','VkController@vkEvent');
