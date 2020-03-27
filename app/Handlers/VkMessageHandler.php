@@ -4,6 +4,7 @@
 namespace App\Handlers;
 
 
+use App\Enums\StateTypesEnum;
 use App\Managers\PossibleStatesManager;
 use App\Managers\StatesManager;
 use App\Managers\TriggerWordsManager;
@@ -105,10 +106,10 @@ class VkMessageHandler
         $receivedMessage = $receivedMessage['text'];
         MyLogger::LOG('handleUserMessage $user' . MyLogger::JSON_ENCODE($user) . ' $receivedMessage ' . MyLogger::JSON_ENCODE($receivedMessage));
         $triggerWords = $this->generateTriggerWordsForState($user->state);
-        $nexState = $triggerWords->where('word', $receivedMessage);
-        MyLogger::LOG('$triggerWords ' . MyLogger::JSON_ENCODE($triggerWords) . ' $nexState. ' . MyLogger::JSON_ENCODE($nexState));
-        if ($nexState->isNotEmpty()) {
-            $this->moveUserToState($user, $nexState->first()->state);
+        $nexStates = $triggerWords->where('word', $receivedMessage);
+        MyLogger::LOG('$triggerWords ' . MyLogger::JSON_ENCODE($triggerWords) . ' $nexState. ' . MyLogger::JSON_ENCODE($nexStates));
+        if ($nexStates->isNotEmpty()) {
+            $this->moveUserToState($user, $nexStates->first()['state']);
         } else {
             MyLogger::LOG('handleUserMessage No next state trigger word $user' . MyLogger::JSON_ENCODE($user) . ' $receivedMessage ' . MyLogger::JSON_ENCODE($receivedMessage));
             $this->vkMessenger->sendMessageToUserWithKeyboard($user, __('messages.unknown_command'), $this->generateTriggerWordsForState($user->state));
@@ -126,7 +127,8 @@ class VkMessageHandler
         $chatLink = $apiInteractor->getChatLinkForCoordinates($coordinates);
         MyLogger::LOG('handleGeoMessage $chatLink' . MyLogger::JSON_ENCODE($chatLink));
         if ($chatLink) {
-            $this->moveUserToState($user, 5, $chatLink);
+            //FIXME: change link handling
+//            $this->moveUserToState($user, 5, $chatLink);
         } else {
             $this->moveUserToState($user, 6);
         }
@@ -138,32 +140,76 @@ class VkMessageHandler
         $apiInteractor->saveChatLinkForCoordinates($coordinates, $link);
     }
 
-    private function moveUserToState($user, $newState, $extraMessage = '', $extraStartMessage = '')
+    private function moveUserToState($user, $newState)
     {
         MyLogger::LOG('moveUserToState $user' . MyLogger::JSON_ENCODE($user) . ' $newState ' . MyLogger::JSON_ENCODE($newState));
-        $user->state = $newState;
-        $newState = $this->statesManager->getStates()->where('state', '=', $newState)->get()->first();
-        if ($this->vkMessenger->sendMessageToUserWithKeyboard($user, $extraStartMessage . ' ' . $newState->message . ' ' . $extraMessage, $this->generateTriggerWordsForState($newState))) {
-            $user->save();
-        };
+        $newStateFull = $this->statesManager->getStates()->where('state', '=', $newState)->first();
+        $stateMessages = $newStateFull['state_messages'];
+        $stateMessagesCount = count($newStateFull['state_messages']);
+        if ($stateMessagesCount > 1) {
+            //TODO: send multiple messages
+            for($i = 0; $i<$stateMessagesCount-1;$i++){
+                $this->vkMessenger->sendMessageToUser($user, __('state_messages.' . $newStateFull['state_messages'][$i]));
+            }
+            $messageResToSend = $newStateFull['state_messages'][$stateMessagesCount-1];
+        } else {
+            $messageResToSend = $newStateFull['state_messages'][0];
+        }
+            switch ($newStateFull['state_type']) {
+                case StateTypesEnum::$SEND_MESSAGE_AND_CHANGE_STATE:
+                    if ($this->vkMessenger->sendMessageToUserWithKeyboard(
+                        $user,
+                        __('state_messages.' . $messageResToSend),
+                        $this->generateTriggerWordsForState($newState))
+                    ) {
+                        $user->state = $newState;
+                        $user->save();
+                    };
+                    break;
+                case StateTypesEnum::$SEND_MESSAGE_AND_GO_TO_MAIN:
+                    if ($this->vkMessenger->sendMessageToUserWithKeyboard(
+                        $user,
+                        __('state_messages.'.$messageResToSend),
+                        $this->generateTriggerWordsForState('main_screen'))
+                    ) {
+                        $user->state = 'main_screen';
+                        $user->save();
+                    };
+                    break;
+                case StateTypesEnum::$JUST_SEND_MESSAGE:
+                    if ($this->vkMessenger->sendMessageToUser($user, __('state_messages.' . $messageResToSend))) {
+                        $user->save();
+                    };
+                    break;
+
+                default:
+                    $this->handleInnerError();
+                    break;
+            }
+//            if ($this->vkMessenger->sendMessageToUserWithKeyboard(
+//                $user,
+//                __('state_messages.' . $newStateFull['state_messages'][0]),
+//                $this->generateTriggerWordsForState($newState))
+//            ) {
+//                $user->save();
+//            };
+    }
+
+    private function handleInnerError()
+    {
+
     }
 
     private function generateTriggerWordsForState($state): Collection
     {
         $userPossibleStates = $this->possibleStatesManager->getPossibleStates()
             ->where('current_state', '=', $state)
-            ->get('possible_state')
             ->map(function ($item, $key) {
-                return $item->possible_state;
+                return $item['possible_state'];
             })
             ->toArray();
         $triggerWords = $this->triggerWordsManager->getTriggerWords()
-            ->whereIn('state', $userPossibleStates)
-            ->get()
-            ->filter(function ($value, $key) {
-                return $value->id != 1;
-            });
-        dd($userPossibleStates, $triggerWords);
+            ->whereIn('state', $userPossibleStates);
 
         return $triggerWords;
     }
