@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\StatesNamesEnum;
+
 return [
     'start_1' => 'Начало',
     'start_2' => 'Начало',
@@ -9,8 +11,12 @@ return [
     'start_6' => 'начало',
     'start_7' => 'начать',
     'start_8' => 'start',
-    'reminder' => 'Памятка о коронавирусе',
-    'volunteers' => 'Волонтерам',
-    'subscribe_init' => 'Подписаться',
-    'subscribe_accept' => 'Подписаться',
+
+    StatesNamesEnum::$REMINDER => 'Памятка о коронавирусе',
+    StatesNamesEnum::$VOLUNTEERS => 'Волонтерам',
+    StatesNamesEnum::$SUBSCRIBE_INIT => 'Подписаться',
+
+    StatesNamesEnum::$SUBSCRIBE_INIT_ACCEPT => 'Подписаться',
+    StatesNamesEnum::$SUBSCRIBE_INIT_UN_SUBSCRIBING_REQUEST => 'Отписаться',
+    StatesNamesEnum::$SUBSCRIBE_INIT_SUBSCRIBING_REQUEST => 'Подписаться',
 ];

@@ -41,9 +41,7 @@ class VkMessenger
             $query['query']['keyboard'] = $keyboardJson;
         }
         MyLogger::LOG('sendMessageToUser pre get $user' . MyLogger::JSON_ENCODE($user) . ' $query ' . MyLogger::JSON_ENCODE($query));
-//        dd($query);
         $get = $gluszzClient->get('messages.send', $query);
-//        dd($query,$keyboardJson,$get);
         MyLogger::LOG('sendMessageToUser after get $user' . MyLogger::JSON_ENCODE($user) . ' $get->getBody() ' . MyLogger::JSON_ENCODE($get->getBody()->getContents()));
         if ($get->getStatusCode() == 200) {
             $user->update(['random_id' => $user->random_id + 1]);
@@ -56,6 +54,7 @@ class VkMessenger
 
     private function generateKeyboardJson(Collection $triggerWords)
     {
+//        dd($triggerWords);
         $possibleStates = $triggerWords->filter(function ($value, $key) {
             return $value['state']!='main_screen';
         });

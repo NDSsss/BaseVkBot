@@ -18,8 +18,8 @@ use Illuminate\Support\Facades\Route;
 //    return 'work';
 //});
 
-Route::post('test',function (){
-    return'work';
-});
+//Route::post('test',function (){
+//    return'work';
+//});
 
 Route::post('vkBot','VkController@vkEvent');

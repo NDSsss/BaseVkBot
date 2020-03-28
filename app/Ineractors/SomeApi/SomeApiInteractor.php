@@ -4,6 +4,7 @@
 namespace App\Handlers;
 
 
+use App\Ineractors\SomeApi\Results\SomeApiIsSubscribedResults;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ServerException;
 use Illuminate\Support\Facades\Log;
@@ -46,5 +47,21 @@ class SomeApiInteractor
         $get = $gluszzClient->post('');
         Log::debug('saved ');
         $resultCode = $get->getStatusCode();
+    }
+
+    public function isSubscribed($user)
+    {
+        //TODO: make request to api and handle result
+        return SomeApiIsSubscribedResults::$NOT_SUBSCRIBED;
+    }
+
+    public function subscribe($user)
+    {
+        return SomeApiIsSubscribedResults::$SUBSCRIBE_ALREADY_SUBBED;
+    }
+
+    public function unSubscribe($user)
+    {
+        return SomeApiIsSubscribedResults::$UN_SUBSCRIBE_SUCCESS;
     }
 }
