@@ -5,38 +5,59 @@ namespace App\Handlers;
 
 
 use App\Ineractors\SomeApi\Results\SomeApiIsSubscribedResults;
+use App\MyLogger;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ServerException;
 use Illuminate\Support\Facades\Log;
 
 class SomeApiInteractor
 {
+
+    function getChatLinkForCoordinatesTest()
+    {
+        $tstCoordinates = '44.936877,34.12343';
+        dd($this->getChatLinkForCoordinates($tstCoordinates));
+    }
+
     function getChatLinkForCoordinates($coordinates)
     {
-        return [SomeApiIsSubscribedResults::$CHAT_FOR_COORDINATES_NOT_EXISTS,'some address from interactor','some link from interactor'];
-//        $tstUrl = 'https://api.covidarnost.ru/chat/getChat/?data={"coords": "' . $coordinates . '"}';
-//        $gluszzClient = new Client([
-//            'base_uri' => $tstUrl,
-//        ]);
-//        try {
-//            Log::debug('start $tstUrl ' . json_encode($tstUrl));
-//            $get = $gluszzClient->post('');
-//            $resultCode = $get->getStatusCode();
-//            Log::debug('complete $resultCode ' . json_encode($resultCode));
-//
-//            if ($resultCode == 200) {
-//                $resultBodyString = $get->getBody()->getContents();
-//                Log::debug('getChatLinkForCoordinates answer ' . $resultBodyString);
-//                $resultBodyObj = json_decode($resultBodyString);
-//                return $resultBodyObj->url;
-//            } else {
-//                return null;
-//            }
-//        } catch (ServerException $ex) {
-//            dd($ex);
-//            Log::debug('catch catch ');
-//            return null;
-//        }
+        /*
+         * 200 - уже существует
+         * 501 - еще нет
+         * все остальные ошибка
+         */
+//        return [SomeApiIsSubscribedResults::$CHAT_FOR_COORDINATES_NOT_EXISTS,'some address from interactor','some link from interactor'];
+        $tstUrl = 'https://api.covidarnost.ru/chat/getChat/?data={"coords": "' . $coordinates . '"}';
+        $gluszzClient = new Client([
+            'base_uri' => $tstUrl,
+        ]);
+        try {
+            MyLogger::LOG('start getChatLinkForCoordinates $tstUrl ' . MyLogger::JSON_ENCODE($tstUrl));
+            $get = $gluszzClient->post('');
+            //После ниже выполянется в случае успеха, если будет ошибка при запросе, то ниже код не выполниться, выполниться catch
+            $resultCode = $get->getStatusCode();
+            MyLogger::LOG('complete getChatLinkForCoordinates $resultCode ' . MyLogger::JSON_ENCODE($resultCode));
+
+            if ($resultCode == 200) {
+                $resultBodyString = $get->getBody()->getContents();
+                MyLogger::LOG('getChatLinkForCoordinates answer ' . $resultBodyString);
+                $resultBodyObj = json_decode($resultBodyString);
+//                dd($resultBodyObj);
+                return [SomeApiIsSubscribedResults::$CHAT_FOR_COORDINATES_EXISTS,$resultBodyObj->address,$resultBodyObj->url];
+            } else {
+                return [SomeApiIsSubscribedResults::$UNKNOWN_ERROR];
+            }
+        } catch (ServerException $ex) {
+//            dd($ex->getCode());
+            switch ($ex->getCode()) {
+                case 501:
+                    return [SomeApiIsSubscribedResults::$CHAT_FOR_COORDINATES_NOT_EXISTS];
+                    break;
+                default:
+                    return [SomeApiIsSubscribedResults::$UNKNOWN_ERROR];
+                    break;
+            }
+        }
     }
 
     function saveChatLinkForCoordinates($coordinates, $link)
@@ -68,11 +89,13 @@ class SomeApiInteractor
         return [SomeApiIsSubscribedResults::$UN_SUBSCRIBE_SUCCESS];
     }
 
-    public function saveUser(){
+    public function saveUser()
+    {
         return [SomeApiIsSubscribedResults::$SAVE_USER_SUCCESS];
     }
 
-    public function verifyAddress($addressInput){
-        return [SomeApiIsSubscribedResults::$VERIFY_ADDRESS_SUCCESS,'some address from interactor','44.936877,34.12343'];
+    public function verifyAddress($addressInput)
+    {
+        return [SomeApiIsSubscribedResults::$VERIFY_ADDRESS_SUCCESS, 'some address from interactor', '44.936877,34.12343'];
     }
 }

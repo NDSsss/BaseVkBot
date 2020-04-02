@@ -29,7 +29,6 @@ class VkController extends Controller
     }
 
     public function test(SomeApiInteractor $apiInteractor){
-
-        return $apiInteractor->getChatLinkForCoordinates('44.952141,34.09993');
+        $apiInteractor->getChatLinkForCoordinatesTest();
     }
 }
