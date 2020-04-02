@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Handlers\SomeApiInteractor;
 use Illuminate\Http\Request;
 
 class VkController extends Controller
@@ -22,7 +23,13 @@ class VkController extends Controller
                     return 'ok';
             }
         } else {
+            dd(env('VK_GROUP_ID'));
             return \Illuminate\Http\Response::create(null,404);
         }
+    }
+
+    public function test(SomeApiInteractor $apiInteractor){
+
+        return $apiInteractor->getChatLinkForCoordinates('44.952141,34.09993');
     }
 }

@@ -41,6 +41,31 @@ class TriggerWordsManager
             'type' => TriggerTypeEnum::$TEXT,
             'word' => __('trigger_words.' . StatesNamesEnum::$SUBSCRIBE_INIT_UN_SUBSCRIBING_REQUEST),
         ];
+        $values[] = [
+            'state' => StatesNamesEnum::$HELP,
+            'type' => TriggerTypeEnum::$TEXT,
+            'word' => __('trigger_words.' . StatesNamesEnum::$HELP),
+        ];
+        $values[] = [
+            'state' => StatesNamesEnum::$HELP_SAVE_USER_WITH_GEO_REQUEST,
+            'type' => TriggerTypeEnum::$LOCATION,
+            'word' => __('trigger_words.' . StatesNamesEnum::$HELP_SAVE_USER_WITH_GEO_REQUEST),
+        ];
+        $values[] = [
+            'state' => StatesNamesEnum::$HELP_USER_ADDRESS_INPUT,
+            'type' => TriggerTypeEnum::$TEXT,
+            'word' => __('trigger_words.' . StatesNamesEnum::$HELP_USER_ADDRESS_INPUT),
+        ];
+        $values[] = [
+            'state' => StatesNamesEnum::$HELP_CHAT_WAIT_LINK,
+            'type' => TriggerTypeEnum::$TEXT,
+            'word' => __('trigger_words.' . StatesNamesEnum::$HELP_CHAT_WAIT_LINK),
+        ];
+        $values[] = [
+            'state' => StatesNamesEnum::$HELP_USER_ADDRESS_INPUT_USER_ACCEPT,
+            'type' => TriggerTypeEnum::$TEXT,
+            'word' => __('trigger_words.' . StatesNamesEnum::$HELP_USER_ADDRESS_INPUT_USER_ACCEPT),
+        ];
 //        $values[] = ['state' => 'subscribe_accept', 'type' => TriggerTypeEnum::$TEXT, 'word' => __('trigger_words.subscribe_accept'),];
 
         $valuesCollection = collect($values);

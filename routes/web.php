@@ -14,3 +14,4 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/','WebController@mainScreen');
+Route::get('/tst','WebController@mainScreen');

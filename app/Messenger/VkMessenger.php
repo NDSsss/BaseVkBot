@@ -17,9 +17,9 @@ class VkMessenger
         return $this->sendMessage($user, $message);
     }
 
-    public function sendMessageToUserWithKeyboard($user, $message, $triggerWords)
+    public function sendMessageToUserWithKeyboard($user, $message, $triggerWords, $addMainScreenButton = true)
     {
-        return $this->sendMessage($user, $message, $this->generateKeyboardJson($triggerWords));
+        return $this->sendMessage($user, $message, $this->generateKeyboardJson($triggerWords, $addMainScreenButton));
     }
 
     private function sendMessage($user, $message, $keyboardJson = null)
@@ -52,11 +52,10 @@ class VkMessenger
     }
 
 
-    private function generateKeyboardJson(Collection $triggerWords)
+    private function generateKeyboardJson(Collection $triggerWords, $addMainScreenButton = true)
     {
-//        dd($triggerWords);
         $possibleStates = $triggerWords->filter(function ($value, $key) {
-            return $value['state']!='main_screen';
+            return $value['state'] != 'main_screen';
         });
         $buttons = [];
         foreach ($possibleStates as $currState) {
@@ -80,13 +79,15 @@ class VkMessenger
             }
 
         }
-        $buttons[] = [[
-            'action' => [
-                'type' => 'text',
-                'label' => __('trigger_words.start_1')
-            ],
-            'color' => 'secondary'
-        ]];
+        if ($addMainScreenButton) {
+            $buttons[] = [[
+                'action' => [
+                    'type' => 'text',
+                    'label' => __('trigger_words.start_1')
+                ],
+                'color' => 'secondary'
+            ]];
+        }
         $buttonsObject = [
             'one_time' => false,
             'buttons' => $buttons,
