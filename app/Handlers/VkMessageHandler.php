@@ -150,19 +150,13 @@ class VkMessageHandler
         MyLogger::LOG('handleGeoMessage $vk_user_id' . MyLogger::JSON_ENCODE($this->user->vk_user_id) . ' $geo ' . MyLogger::JSON_ENCODE($geo));
         $lat = $geo['coordinates']['latitude'];
         $lng = $geo['coordinates']['longitude'];
-//        $coordinates = $geo['coordinates']['latitude'] . ',' . $geo['coordinates']['longitude'];
-//        if ($this->handleCommonErrors($this->apiInteractor->saveUser())[0] != SomeApiIsSubscribedResults::$SAVE_USER_SUCCESS) {
-//            return null;
-//        }
         $this->user->lat = $lat;
         $this->user->lng = $lng;
         $this->user->save();
-//        $userState = $user->state;
         $chatLinkResult = $this->handleCommonErrors($this->apiInteractor->getChatLinkForCoordinates($lat, $lng));
         switch ($chatLinkResult[0]) {
             case SomeApiIsSubscribedResults::$CHAT_FOR_COORDINATES_EXISTS:
                 $urlsWithAddresses = '';
-//                dd($chatLinkResult);
                 foreach ($chatLinkResult[1] as $chat) {
                     $urlsWithAddresses .= "\n" . $chat->url . ' - ' . $chat->address->full_address;
                 }
@@ -355,7 +349,7 @@ class VkMessageHandler
         $tmpGeo = [];
         $tmpGeo['coordinates']['latitude'] = $this->user->lat;
         $tmpGeo['coordinates']['longitude'] = $this->user->lng;
-        $this->handleGeoMessage($this->user, $tmpGeo);
+        $this->handleGeoMessage($tmpGeo);
     }
 
     private function handleCommonErrors($result)
