@@ -24,4 +24,5 @@ use Illuminate\Support\Facades\Route;
 //});
 
 Route::post('vkBot','VkController@vkEvent');
-Route::post('test','VkController@test');
+//Route::post('test','VkController@test');
+Route::post('migrate','VkController@migrate');

@@ -11,6 +11,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
+        UsersTableSaver::CREATE_OLD_USERS_TABLE();
 //        $this->call(StateSeeder::class);
     }
 }

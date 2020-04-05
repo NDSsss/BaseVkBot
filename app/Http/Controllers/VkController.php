@@ -3,8 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Handlers\SomeApiInteractor;
+use App\Messenger\VkMessenger;
 use App\MyLogger;
+use CreateUsersTable;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
+use UsersTableSaver;
 
 class VkController extends Controller
 {
@@ -29,8 +34,29 @@ class VkController extends Controller
         }
     }
 
-    public function test(SomeApiInteractor $apiInteractor)
+    public function migrate()
     {
-        $apiInteractor->isSubscribedTest();
+        Schema::create('users', function (Blueprint $table) {
+            $table->bigIncrements('id')->unique();
+            $table->integer('vk_user_id')->nullable()->unique();
+            $table->string('name')->nullable();
+            $table->string('city')->nullable();
+            $table->string('coordinates')->nullable();
+            $table->string('lat')->nullable();
+            $table->string('lng')->nullable();
+            $table->string('state')->default('main_screen');
+            $table->unsignedBigInteger('random_id')->default(1);
+        });
+        $oldUsers = \DB::table('users_old')->get();
+        $newUsersFromOld = $oldUsers->map(function ($item) {
+            $newItem = [];
+            $newItem['id'] = $item->id;
+            $newItem['vk_user_id'] = $item->vk_user_id;
+            $newItem['random_id'] = $item->random_id;
+            return $newItem;
+        });
+        $newUsersFromOldArray = $newUsersFromOld->toArray();
+        \DB::table('users')->insert($newUsersFromOldArray);
     }
+
 }
