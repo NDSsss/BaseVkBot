@@ -47,9 +47,9 @@ class TriggerWordsManager
             'word' => __('trigger_words.' . StatesNamesEnum::$HELP),
         ];
         $values[] = [
-            'state' => StatesNamesEnum::$HELP_SAVE_USER_WITH_GEO_REQUEST,
+            'state' => StatesNamesEnum::$HELP_GET_NEAR_CHAT_REQUEST,
             'type' => TriggerTypeEnum::$LOCATION,
-            'word' => __('trigger_words.' . StatesNamesEnum::$HELP_SAVE_USER_WITH_GEO_REQUEST),
+            'word' => __('trigger_words.' . StatesNamesEnum::$HELP_GET_NEAR_CHAT_REQUEST),
         ];
         $values[] = [
             'state' => StatesNamesEnum::$HELP_USER_ADDRESS_INPUT,

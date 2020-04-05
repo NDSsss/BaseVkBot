@@ -13,7 +13,6 @@ use App\Managers\TriggerWordsManager;
 use App\Messenger\VkMessenger;
 use App\MyLogger;
 use App\User;
-use Dotenv\Regex\Regex;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
@@ -80,7 +79,6 @@ class VkMessageHandler
 
     function handleMessageRequest(Request $request)
     {
-        MyLogger::LOG('handleMessageRequest' . MyLogger::JSON_ENCODE($request));
         $object = $request->input('object');
         $vkUserId = $object['message']['from_id'];
         $foundUser = User::query()->where('vk_user_id', $vkUserId)->get()->first();
@@ -100,14 +98,14 @@ class VkMessageHandler
             switch ($foundUser->state) {
                 case StatesNamesEnum::$HELP:
                     if (key_exists('geo', $message)) {
-                        $this->handleGeoMessage($foundUser, $message['geo']);
+                        $this->handleGeoMessage($message['geo']);
                         break;
                     }
                     $this->handleUserMessage($message);
                     break;
                 case StatesNamesEnum::$HELP_CHAT_WAIT_LINK:
                     if (filter_var($message['text'], FILTER_VALIDATE_URL)) {
-                        $this->saveChatLink($foundUser->coordinates, $message['text']);
+                        $this->saveChatLink($message['text']);
                     } else {
                         $this->moveUserToState(StatesNamesEnum::$HELP_CHAT_WAIT_LINK_VALIDATION_ERROR);
                     }
@@ -130,7 +128,7 @@ class VkMessageHandler
     function handleUserMessage($receivedMessage)
     {
         $receivedMessage = $receivedMessage['text'];
-        MyLogger::LOG('handleUserMessage $user' . MyLogger::JSON_ENCODE($this->user) . ' $receivedMessage ' . MyLogger::JSON_ENCODE($receivedMessage));
+        MyLogger::LOG('handleUserMessage $vk_user_id ' . MyLogger::JSON_ENCODE($this->user->vk_user_id) . ' $receivedMessage ' . MyLogger::JSON_ENCODE($receivedMessage));
         $triggerWords = $this->generateTriggerWordsForState($this->user->state);
         $nexStates = $triggerWords->where('word', $receivedMessage);
         MyLogger::LOG('$triggerWords ' . MyLogger::JSON_ENCODE($triggerWords) . ' $nexState. ' . MyLogger::JSON_ENCODE($nexStates));
@@ -147,23 +145,32 @@ class VkMessageHandler
         }
     }
 
-    function handleGeoMessage($user, $geo)
+    function handleGeoMessage($geo)
     {
-        MyLogger::LOG('handleGeoMessage $user' . MyLogger::JSON_ENCODE($user) . ' $geo ' . MyLogger::JSON_ENCODE($geo));
-        $coordinates = $geo['coordinates']['latitude'] . ',' . $geo['coordinates']['longitude'];
-        if ($this->handleCommonErrors($this->apiInteractor->saveUser())[0] != SomeApiIsSubscribedResults::$SAVE_USER_SUCCESS) {
-            return null;
-        }
-        $user->coordinates = $coordinates;
-        $user->save();
-        $userState = $user->state;
-        $chatLinkResult = $this->handleCommonErrors($this->apiInteractor->getChatLinkForCoordinates($coordinates));
+        MyLogger::LOG('handleGeoMessage $vk_user_id' . MyLogger::JSON_ENCODE($this->user->vk_user_id) . ' $geo ' . MyLogger::JSON_ENCODE($geo));
+        $lat = $geo['coordinates']['latitude'];
+        $lng = $geo['coordinates']['longitude'];
+//        $coordinates = $geo['coordinates']['latitude'] . ',' . $geo['coordinates']['longitude'];
+//        if ($this->handleCommonErrors($this->apiInteractor->saveUser())[0] != SomeApiIsSubscribedResults::$SAVE_USER_SUCCESS) {
+//            return null;
+//        }
+        $this->user->lat = $lat;
+        $this->user->lng = $lng;
+        $this->user->save();
+//        $userState = $user->state;
+        $chatLinkResult = $this->handleCommonErrors($this->apiInteractor->getChatLinkForCoordinates($lat, $lng));
         switch ($chatLinkResult[0]) {
             case SomeApiIsSubscribedResults::$CHAT_FOR_COORDINATES_EXISTS:
-                $this->moveUserToState(StatesNamesEnum::$HELP_CHAT_FOUND, ['address' => $chatLinkResult[1], 'url' => $chatLinkResult[2]]);
+                $urlsWithAddresses = '';
+//                dd($chatLinkResult);
+                foreach ($chatLinkResult[1] as $chat) {
+                    $urlsWithAddresses .= "\n" . $chat->url . ' - ' . $chat->address->full_address;
+                }
+                $this->moveUserToState(StatesNamesEnum::$HELP_CHAT_FOUND, ['addresses' => $urlsWithAddresses]);
                 break;
             case SomeApiIsSubscribedResults::$CHAT_FOR_COORDINATES_NOT_EXISTS:
-                $this->moveUserToState(StatesNamesEnum::$HELP_CHAT_NOT_FOUND, ['address' => $chatLinkResult[1]]);
+                //TODO: parse address
+                $this->moveUserToState(StatesNamesEnum::$HELP_CHAT_NOT_FOUND);
                 break;
         }
     }
@@ -173,7 +180,8 @@ class VkMessageHandler
         $result = $this->handleCommonErrors($this->apiInteractor->verifyAddress($addressInput));
         switch ($result[0]) {
             case SomeApiIsSubscribedResults::$VERIFY_ADDRESS_SUCCESS:
-                $this->user->coordinates = $result[2];
+                $this->user->lat = $result[2];
+                $this->user->lng = $result[3];
                 $this->user->save();
                 $this->moveUserToState(StatesNamesEnum::$HELP_USER_ADDRESS_INPUT_SUCCESS, ['address' => $result[1]]);
                 break;
@@ -183,12 +191,17 @@ class VkMessageHandler
         }
     }
 
-    private function saveChatLink($coordinates, $link)
+    private function saveChatLink($link)
     {
-        $result = $this->handleCommonErrors($this->apiInteractor->saveChatLinkForCoordinates($coordinates, $link));
+        $lat = $this->user->lat;
+        $lng = $this->user->lng;
+        $result = $this->handleCommonErrors($this->apiInteractor->saveChatLinkForCoordinates($lat, $lng, $link, $this->user->vk_user_id));
         switch ($result[0]) {
             case SomeApiIsSubscribedResults::$CHAT_LINK_SAVE_SUCCESS:
                 $this->moveUserToState(StatesNamesEnum::$HELP_CREATE_CHAT_SUCCESS);
+                break;
+            case SomeApiIsSubscribedResults::$CHAT_LINK_SAVE_DUPLICATE:
+                $this->moveUserToState(StatesNamesEnum::$HELP_CREATE_CHAT_DUPLICATE);
                 break;
             default:
                 $this->handleInnerError();
@@ -198,7 +211,11 @@ class VkMessageHandler
 
     private function moveUserToState($newState, $messagesArgs = [])
     {
-        MyLogger::LOG('moveUserToState $user' . MyLogger::JSON_ENCODE($this->user) . ' $newState ' . MyLogger::JSON_ENCODE($newState));
+        MyLogger::LOG(
+            'moveUserToState $vk_user_id ' . MyLogger::JSON_ENCODE($this->user->vk_user_id)
+            .' $current_state' . MyLogger::JSON_ENCODE($this->user->state)
+            . ' $newState ' . MyLogger::JSON_ENCODE($newState)
+        );
         $newStateFull = $this->statesManager->getStates()->where('state', '=', $newState)->first();
         $stateMessages = $newStateFull['state_messages'];
         $stateMessagesCount = count($newStateFull['state_messages']);
@@ -283,7 +300,7 @@ class VkMessageHandler
 
     private function subscribeInitIsSubscribed()
     {
-        $result = $this->handleCommonErrors($this->apiInteractor->isSubscribed($this->user))[0];
+        $result = $this->handleCommonErrors($this->apiInteractor->isSubscribed($this->user->vk_user_id))[0];
         switch ($result) {
             case SomeApiIsSubscribedResults::$SUBSCRIBED:
                 $this->moveUserToState(StatesNamesEnum::$SUBSCRIBE_INIT_ALREADY_SUB);
@@ -291,15 +308,28 @@ class VkMessageHandler
             case SomeApiIsSubscribedResults::$NOT_SUBSCRIBED:
                 $this->moveUserToState(StatesNamesEnum::$SUBSCRIBE_INIT_NOT_SUBBED);
                 break;
-            default:
-                $this->moveUserToState(StatesNamesEnum::$REQUEST_ERROR);
+            case SomeApiIsSubscribedResults::$NO_USER_FOUND:
+                $saveUserResult = $this->handleCommonErrors($this->apiInteractor->saveUser($this->user->vk_user_id))[0];
+                switch ($saveUserResult) {
+                    case SomeApiIsSubscribedResults::$SAVE_USER_SUCCESS:
+                        $reIsSubResult = $this->handleCommonErrors($this->apiInteractor->isSubscribed($this->user->vk_user_id))[0];
+                        switch ($reIsSubResult) {
+                            case SomeApiIsSubscribedResults::$SUBSCRIBED:
+                                $this->moveUserToState(StatesNamesEnum::$SUBSCRIBE_INIT_ALREADY_SUB);
+                                break;
+                            case SomeApiIsSubscribedResults::$NOT_SUBSCRIBED:
+                                $this->moveUserToState(StatesNamesEnum::$SUBSCRIBE_INIT_NOT_SUBBED);
+                                break;
+                        }
+                        break;
+                }
                 break;
         }
     }
 
     private function subscribeInitSubscribe()
     {
-        $result = $this->handleCommonErrors($this->apiInteractor->subscribe($this->user))[0];
+        $result = $this->handleCommonErrors($this->apiInteractor->subscribe($this->user->vk_user_id))[0];
         switch ($result) {
             case SomeApiIsSubscribedResults::$SUBSCRIBE_ALREADY_SUBBED:
                 $this->moveUserToState(StatesNamesEnum::$SUBSCRIBE_INIT_ALREADY_SUB);
@@ -307,31 +337,25 @@ class VkMessageHandler
             case SomeApiIsSubscribedResults::$SUBSCRIBE_SUCCESS:
                 $this->moveUserToState(StatesNamesEnum::$SUBSCRIBE_INIT_SUBSCRIBING_SUCCESS);
                 break;
-            default:
-                $this->moveUserToState(StatesNamesEnum::$REQUEST_ERROR);
-                break;
         }
     }
 
     private function subscribeInitUnSubscribe()
     {
-        $result = $this->handleCommonErrors($this->apiInteractor->unSubscribe($this->user))[0];
+        $result = $this->handleCommonErrors($this->apiInteractor->unSubscribe($this->user->vk_user_id))[0];
         switch ($result) {
             case SomeApiIsSubscribedResults::$UN_SUBSCRIBE_SUCCESS:
                 $this->moveUserToState(StatesNamesEnum::$SUBSCRIBE_INIT_UN_SUBSCRIBING_SUCCESS);
                 break;
-            default:
-                $this->moveUserToState(StatesNamesEnum::$REQUEST_ERROR);
-                break;
         }
     }
 
-    private function handleUserAcceptAddressAction(){
-        $savedCoordinates = explode(',',$this->user->coordinates);
+    private function handleUserAcceptAddressAction()
+    {
         $tmpGeo = [];
-        $tmpGeo['coordinates']['latitude']=$savedCoordinates[0];
-        $tmpGeo['coordinates']['longitude']=$savedCoordinates[1];
-        $this->handleGeoMessage($this->user,$tmpGeo);
+        $tmpGeo['coordinates']['latitude'] = $this->user->lat;
+        $tmpGeo['coordinates']['longitude'] = $this->user->lng;
+        $this->handleGeoMessage($this->user, $tmpGeo);
     }
 
     private function handleCommonErrors($result)

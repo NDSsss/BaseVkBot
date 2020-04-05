@@ -113,15 +113,15 @@ class StatesManager
                 StatesNamesEnum::$HELP . '_2'
             ],
         ];
+//        $values[] = [
+//            'name' => 'Помочь, сохранние пользователя',
+//            'state' => StatesNamesEnum::$HELP_SAVE_USER_WITH_GEO_REQUEST,
+//            'state_type' => StateTypesEnum::$MAKE_SOME_ACTIONS,
+//            'state_messages' => [],
+//        ];
         $values[] = [
             'name' => 'Помочь, сохранние пользователя',
-            'state' => StatesNamesEnum::$HELP_SAVE_USER_WITH_GEO_REQUEST,
-            'state_type' => StateTypesEnum::$MAKE_SOME_ACTIONS,
-            'state_messages' => [],
-        ];
-        $values[] = [
-            'name' => 'Помочь, сохранние пользователя',
-            'state' => StatesNamesEnum::$HELP_GET_CHAT_REQUEST,
+            'state' => StatesNamesEnum::$HELP_GET_NEAR_CHAT_REQUEST,
             'state_type' => StateTypesEnum::$MAKE_SOME_ACTIONS,
             'state_messages' => [],
         ];
@@ -130,7 +130,8 @@ class StatesManager
             'state' => StatesNamesEnum::$HELP_CHAT_FOUND,
             'state_type' => StateTypesEnum::$SEND_MESSAGE_AND_CHANGE_STATE,
             'state_messages' => [
-                StatesNamesEnum::$HELP_CHAT_FOUND
+                StatesNamesEnum::$HELP_CHAT_FOUND . '_1',
+                StatesNamesEnum::$HELP_CHAT_FOUND . '_2',
             ],
         ];
         $values[] = [
@@ -178,6 +179,14 @@ class StatesManager
             'state_type' => StateTypesEnum::$SEND_MESSAGE_AND_GO_TO_MAIN,
             'state_messages' => [
                 StatesNamesEnum::$HELP_CREATE_CHAT_SUCCESS
+            ],
+        ];
+        $values[] = [
+            'name' => 'Помочь, чат создан',
+            'state' => StatesNamesEnum::$HELP_CREATE_CHAT_DUPLICATE,
+            'state_type' => StateTypesEnum::$SEND_MESSAGE_AND_GO_TO_MAIN,
+            'state_messages' => [
+                StatesNamesEnum::$HELP_CREATE_CHAT_DUPLICATE
             ],
         ];
         $values[] = [

@@ -40,9 +40,11 @@ class VkMessenger
         if ($keyboardJson != null) {
             $query['query']['keyboard'] = $keyboardJson;
         }
-        MyLogger::LOG('sendMessageToUser pre get $user' . MyLogger::JSON_ENCODE($user) . ' $query ' . MyLogger::JSON_ENCODE($query));
         $get = $gluszzClient->get('messages.send', $query);
-        MyLogger::LOG('sendMessageToUser after get $user' . MyLogger::JSON_ENCODE($user) . ' $get->getBody() ' . MyLogger::JSON_ENCODE($get->getBody()->getContents()));
+        MyLogger::LOG('VK MESSENGER after get $vk_user_id' . MyLogger::JSON_ENCODE($user->vk_user_id)
+                .' query = '.MyLogger::JSON_ENCODE($query)
+                .' CODE = '.$get->getStatusCode()
+            . ' $get->getBody()->getContents() ' . MyLogger::JSON_ENCODE($get->getBody()->getContents()));
         if ($get->getStatusCode() == 200) {
             $user->update(['random_id' => $user->random_id + 1]);
             return true;

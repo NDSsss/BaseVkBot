@@ -8,94 +8,227 @@ use App\Ineractors\SomeApi\Results\SomeApiIsSubscribedResults;
 use App\MyLogger;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Facades\Log;
+use Psr\Http\Message\RequestInterface;
 
 class SomeApiInteractor
 {
 
-    function getChatLinkForCoordinatesTest()
+    public static $SOCIAL_NETWORK = 'vk';
+
+    /**
+     * @var Client
+     */
+    private $client;
+
+    /**
+     * SomeApiInteractor constructor.
+     */
+    public function __construct()
     {
-        $tstCoordinates = '44.936877,34.12343';
-        dd($this->getChatLinkForCoordinates($tstCoordinates));
+        $this->client = new Client([
+            'base_uri' => 'https://api.covidarnost.ru/v3/',
+            'http_errors' => false,
+        ]);
     }
 
-    function getChatLinkForCoordinates($coordinates)
+
+    function getChatLinkForCoordinatesTest()
+    {
+        $lat = 12.1;
+        $lng = 12.1;
+        dd($this->getChatLinkForCoordinates($lat, $lng));
+    }
+
+    function getChatLinkForCoordinates($lat, $lng)
     {
         /*
-         * 200 - уже существует
-         * 501 - еще нет
+         * 200 - список чатов
+         * 501 - чатов нет
          * все остальные ошибка
          */
-//        return [SomeApiIsSubscribedResults::$CHAT_FOR_COORDINATES_NOT_EXISTS,'some address from interactor','some link from interactor'];
-        $tstUrl = 'https://api.covidarnost.ru/chat/getChat/?data={"coords": "' . $coordinates . '"}';
-        $gluszzClient = new Client([
-            'base_uri' => $tstUrl,
-        ]);
-        try {
-            MyLogger::LOG('start getChatLinkForCoordinates $tstUrl ' . MyLogger::JSON_ENCODE($tstUrl));
-            $get = $gluszzClient->post('');
-            //После ниже выполянется в случае успеха, если будет ошибка при запросе, то ниже код не выполниться, выполниться catch
-            $resultCode = $get->getStatusCode();
-            MyLogger::LOG('complete getChatLinkForCoordinates $resultCode ' . MyLogger::JSON_ENCODE($resultCode));
+        $configWithQuery = [
+            RequestOptions::QUERY => [
+                'lat' => $lat,
+                'lng' => $lng,
+            ]
+        ];
+        $response = $this->client->request('POST', 'Chat/getNear', $configWithQuery);
+        $responseContent = $response->getBody()->getContents();
+        MyLogger::LOG('API Chat/getNear query=' . MyLogger::JSON_ENCODE($configWithQuery) . ' CODE=' . $response->getStatusCode() . ' response= ' . $responseContent);
 
-            if ($resultCode == 200) {
-                $resultBodyString = $get->getBody()->getContents();
-                MyLogger::LOG('getChatLinkForCoordinates answer ' . $resultBodyString);
-                $resultBodyObj = json_decode($resultBodyString);
-//                dd($resultBodyObj);
-                return [SomeApiIsSubscribedResults::$CHAT_FOR_COORDINATES_EXISTS,$resultBodyObj->address,$resultBodyObj->url];
-            } else {
+        switch ($response->getStatusCode()) {
+            case 200:
+                $resultObj = json_decode($responseContent);
+                return [SomeApiIsSubscribedResults::$CHAT_FOR_COORDINATES_EXISTS, $resultObj];
+            case 501:
+                return [SomeApiIsSubscribedResults::$CHAT_FOR_COORDINATES_NOT_EXISTS];
+            default:
                 return [SomeApiIsSubscribedResults::$UNKNOWN_ERROR];
-            }
-        } catch (ServerException $ex) {
-//            dd($ex->getCode());
-            switch ($ex->getCode()) {
-                case 501:
-                    return [SomeApiIsSubscribedResults::$CHAT_FOR_COORDINATES_NOT_EXISTS];
-                    break;
-                default:
-                    return [SomeApiIsSubscribedResults::$UNKNOWN_ERROR];
-                    break;
-            }
         }
     }
 
-    function saveChatLinkForCoordinates($coordinates, $link)
+    function saveChatLinkForCoordinatesTest()
     {
-//        $tstUrl = 'https://api.covidarnost.ru/chat/createChat/?data={"coords": "' . $coordinates . '","url":"' . $link . '"}';
-//        Log::debug('start save $coordinates ' . $coordinates . ' $link ' . $link . ' $tstUrl ' . json_encode($tstUrl));
-//        $gluszzClient = new Client([
-//            'base_uri' => $tstUrl,
-//        ]);
-//        $get = $gluszzClient->post('');
-//        Log::debug('saved ');
-//        $resultCode = $get->getStatusCode();
-        return [SomeApiIsSubscribedResults::$CHAT_LINK_SAVE_SUCCESS];
+        dd($this->saveChatLinkForCoordinates(12, 12, 'http://www.google.com2', 12345));
     }
 
-    public function isSubscribed($user)
+    function saveChatLinkForCoordinates($lat, $lng, $link, $userId)
     {
-        //TODO: make request to api and handle result
-        return [SomeApiIsSubscribedResults::$NOT_SUBSCRIBED];
+        $configWithQuery = [
+            RequestOptions::QUERY => [
+                'lat' => $lat,
+                'lng' => $lng,
+                'url' => $link,
+                'user_id' => $userId,
+                'social_network' => SomeApiInteractor::$SOCIAL_NETWORK,
+            ]
+        ];
+        $response = $this->client->request('POST', 'Chat/createChat', $configWithQuery);
+        $responseContent = $response->getBody()->getContents();
+        MyLogger::LOG('API Chat/createChat query=' . MyLogger::JSON_ENCODE($configWithQuery) . ' CODE=' . $response->getStatusCode() . ' response= ' . $responseContent);
+
+        switch ($response->getStatusCode()) {
+            case 200:
+                return [SomeApiIsSubscribedResults::$CHAT_LINK_SAVE_SUCCESS,];
+            case 409:
+                return [SomeApiIsSubscribedResults::$CHAT_LINK_SAVE_DUPLICATE];
+            default:
+                return [SomeApiIsSubscribedResults::$UNKNOWN_ERROR];
+        }
     }
 
-    public function subscribe($user)
+    public function isSubscribedTest()
     {
-        return [SomeApiIsSubscribedResults::$SUBSCRIBE_ALREADY_SUBBED];
+        $tstId = 12345;
+        dd($this->isSubscribed($tstId));
     }
 
-    public function unSubscribe($user)
+    public function isSubscribed($userId)
     {
-        return [SomeApiIsSubscribedResults::$UN_SUBSCRIBE_SUCCESS];
+        $configWithQuery = [
+            RequestOptions::QUERY => [
+                'user_id' => $userId,
+                'social_network' => SomeApiInteractor::$SOCIAL_NETWORK,
+            ]
+        ];
+        $response = $this->client->request('POST', 'Users/isSubscribed', $configWithQuery);
+        $responseContent = $response->getBody()->getContents();
+        MyLogger::LOG('API Users/isSubscribed query=' . MyLogger::JSON_ENCODE($configWithQuery) . ' CODE=' . $response->getStatusCode() . ' response= ' . $responseContent);
+        switch ($response->getStatusCode()) {
+            case 200:
+                switch ($responseContent) {
+                    case 'true':
+                        return [SomeApiIsSubscribedResults::$SUBSCRIBED];
+                        break;
+                    case 'false':
+                        return [SomeApiIsSubscribedResults::$NOT_SUBSCRIBED];
+                        break;
+                    default:
+                        return [SomeApiIsSubscribedResults::$UNKNOWN_ERROR];
+
+                }
+            case 204:
+                return [SomeApiIsSubscribedResults::$NO_USER_FOUND];
+            default:
+                return [SomeApiIsSubscribedResults::$UNKNOWN_ERROR];
+        }
     }
 
-    public function saveUser()
+    public function subscribe($userId)
     {
-        return [SomeApiIsSubscribedResults::$SAVE_USER_SUCCESS];
+        $configWithQuery = [
+            RequestOptions::QUERY => [
+                'user_id' => $userId,
+                'social_network' => SomeApiInteractor::$SOCIAL_NETWORK,
+                'unsubscribe' => 'false',
+            ]
+        ];
+        $response = $this->client->request('POST', 'Users/subscribeUser', $configWithQuery);
+        $responseContent = $response->getBody()->getContents();
+        MyLogger::LOG('API Users/subscribeUser query=' . MyLogger::JSON_ENCODE($configWithQuery) . ' CODE=' . $response->getStatusCode() . ' response= ' . $responseContent);
+        switch ($response->getStatusCode()) {
+            case 200:
+                return [SomeApiIsSubscribedResults::$SUBSCRIBE_SUCCESS];
+            case 409:
+                return [SomeApiIsSubscribedResults::$SUBSCRIBE_ALREADY_SUBBED];
+            default:
+                return [SomeApiIsSubscribedResults::$UNKNOWN_ERROR];
+        }
+    }
+
+    public function unSubscribe($userId)
+    {
+        $configWithQuery = [
+            RequestOptions::QUERY => [
+                'user_id' => $userId,
+                'social_network' => SomeApiInteractor::$SOCIAL_NETWORK,
+                'unsubscribe' => 'true',
+            ]
+        ];
+        $response = $this->client->request('POST', 'Users/subscribeUser', $configWithQuery);
+        $responseContent = $response->getBody()->getContents();
+        MyLogger::LOG('API Users/subscribeUser query=' . MyLogger::JSON_ENCODE($configWithQuery) . ' CODE=' . $response->getStatusCode() . ' response= ' . $responseContent);
+        switch ($response->getStatusCode()) {
+            case 200:
+                return [SomeApiIsSubscribedResults::$UN_SUBSCRIBE_SUCCESS];
+            default:
+                return [SomeApiIsSubscribedResults::$UNKNOWN_ERROR];
+        }
+    }
+
+    public function saveUserTest()
+    {
+        $id = '12345';
+        dd($this->saveUser($id));
+    }
+
+    public function saveUser($userId)
+    {
+        $configWithQuery = [
+            RequestOptions::QUERY => [
+                'user_id' => $userId,
+                'social_network' => SomeApiInteractor::$SOCIAL_NETWORK,
+            ]
+        ];
+        $response = $this->client->request('POST', 'Users/saveUser', $configWithQuery);
+        $responseContent = $response->getBody()->getContents();
+        MyLogger::LOG('API Users/saveUser query=' . MyLogger::JSON_ENCODE($configWithQuery) . ' CODE=' . $response->getStatusCode() . ' response= ' . $responseContent);
+
+        switch ($response->getStatusCode()) {
+            case 200:
+                return [SomeApiIsSubscribedResults::$SAVE_USER_SUCCESS,];
+            default:
+                return [SomeApiIsSubscribedResults::$UNKNOWN_ERROR];
+        }
+    }
+
+    public function verifyAddressTest()
+    {
+        $tstAddress = 'г.Симферополь ул.Дарвина 9';
+        dd($this->verifyAddress($tstAddress));
     }
 
     public function verifyAddress($addressInput)
     {
-        return [SomeApiIsSubscribedResults::$VERIFY_ADDRESS_SUCCESS, 'some address from interactor', '44.936877,34.12343'];
+        $configWithQuery = [
+            RequestOptions::QUERY => [
+                'address' => $addressInput
+            ]
+        ];
+        $response = $this->client->request('POST', 'Chat/verifyAddress', $configWithQuery);
+        switch ($response->getStatusCode()) {
+            case 200:
+                $responseObj = json_decode($response->getBody()->getContents());
+                return [SomeApiIsSubscribedResults::$VERIFY_ADDRESS_SUCCESS, $responseObj->full_address, $responseObj->lat, $responseObj->lng];
+            case 204:
+                return [SomeApiIsSubscribedResults::$VERIFY_ADDRESS_FAIL,];
+            default:
+                return [SomeApiIsSubscribedResults::$UNKNOWN_ERROR];
+        }
+//        return [SomeApiIsSubscribedResults::$VERIFY_ADDRESS_SUCCESS, 'some address from interactor', '44.936877,34.12343'];
     }
 }

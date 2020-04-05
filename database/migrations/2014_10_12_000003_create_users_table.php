@@ -19,6 +19,8 @@ class CreateUsersTable extends Migration
             $table->string('name')->nullable();
             $table->string('city')->nullable();
             $table->string('coordinates')->nullable();
+            $table->string('lat')->nullable();
+            $table->string('lng')->nullable();
             $table->string('state')->default('main_screen');
             $table->unsignedBigInteger('random_id')->default(1);
         });
@@ -31,6 +33,19 @@ class CreateUsersTable extends Migration
      */
     public function down()
     {
+//        Schema::dropIfExists('users_old');
+//        Schema::create('users_old', function (Blueprint $table) {
+//            $table->bigIncrements('id')->unique();
+//            $table->integer('vk_user_id')->nullable()->unique();
+//            $table->string('name')->nullable();
+//            $table->string('city')->nullable();
+//            $table->string('coordinates')->nullable();
+//            $table->string('lat')->nullable();
+//            $table->string('lng')->nullable();
+//            $table->string('state')->default('main_screen');
+//            $table->unsignedBigInteger('random_id')->default(1);
+//        });
+//        DB::table('users_old')->insert(DB::table('users')->get()->toArray());
         Schema::dropIfExists('users');
     }
 }

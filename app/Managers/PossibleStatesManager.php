@@ -30,7 +30,7 @@ class PossibleStatesManager
         $values[] = ['current_state'=>StatesNamesEnum::$SUBSCRIBE_INIT_NOT_SUBBED,'possible_state'=>StatesNamesEnum::$SUBSCRIBE_INIT_SUBSCRIBING_REQUEST,];
 
         $values[] = ['current_state'=>StatesNamesEnum::$HELP,'possible_state'=>StatesNamesEnum::$HELP_USER_ADDRESS_INPUT,];
-        $values[] = ['current_state'=>StatesNamesEnum::$HELP,'possible_state'=>StatesNamesEnum::$HELP_SAVE_USER_WITH_GEO_REQUEST,];
+        $values[] = ['current_state'=>StatesNamesEnum::$HELP,'possible_state'=>StatesNamesEnum::$HELP_GET_NEAR_CHAT_REQUEST,];
 
         $values[] = ['current_state'=>StatesNamesEnum::$HELP_CHAT_FOUND,'possible_state'=>StatesNamesEnum::$HELP_CHAT_WAIT_LINK,];
         $values[] = ['current_state'=>StatesNamesEnum::$HELP_CHAT_FOUND,'possible_state'=>StatesNamesEnum::$HELP_USER_ADDRESS_INPUT,];
@@ -38,7 +38,7 @@ class PossibleStatesManager
         $values[] = ['current_state'=>StatesNamesEnum::$HELP_CHAT_NOT_FOUND,'possible_state'=>StatesNamesEnum::$HELP_CHAT_WAIT_LINK,];
         $values[] = ['current_state'=>StatesNamesEnum::$HELP_CHAT_NOT_FOUND,'possible_state'=>StatesNamesEnum::$HELP_USER_ADDRESS_INPUT,];
 
-        $values[] = ['current_state'=>StatesNamesEnum::$HELP_USER_ADDRESS_INPUT,'possible_state'=>StatesNamesEnum::$HELP_SAVE_USER_WITH_GEO_REQUEST,];
+        $values[] = ['current_state'=>StatesNamesEnum::$HELP_USER_ADDRESS_INPUT,'possible_state'=>StatesNamesEnum::$HELP_GET_NEAR_CHAT_REQUEST,];
 
         $values[] = ['current_state'=>StatesNamesEnum::$HELP_USER_ADDRESS_INPUT_SUCCESS,'possible_state'=>StatesNamesEnum::$HELP_USER_ADDRESS_INPUT_USER_ACCEPT,];
         $values[] = ['current_state'=>StatesNamesEnum::$HELP_USER_ADDRESS_INPUT_SUCCESS,'possible_state'=>StatesNamesEnum::$HELP_USER_ADDRESS_INPUT,];

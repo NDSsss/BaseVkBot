@@ -22,13 +22,14 @@ class StatesNamesEnum
     public static $SUBSCRIBE_INIT_UN_SUBSCRIBING_SUCCESS ='subscribe_init_subscribing_un_success';
     public static $VOLUNTEERS ='volunteers';
     public static $HELP ='help';
-    public static $HELP_SAVE_USER_WITH_GEO_REQUEST ='help_save_user_with_geo_request';
-    public static $HELP_GET_CHAT_REQUEST ='help_get_chat_request';
+//    public static $HELP_SAVE_USER_WITH_GEO_REQUEST ='help_save_user_with_geo_request';
+    public static $HELP_GET_NEAR_CHAT_REQUEST ='help_get_near_chat_request';
     public static $HELP_CHAT_FOUND ='help_chat_found';
     public static $HELP_CHAT_NOT_FOUND ='help_chat_not_found';
     public static $HELP_CHAT_WAIT_LINK ='help_chat_not_found_wait_link';
     public static $HELP_CHAT_WAIT_LINK_VALIDATION_ERROR ='help_chat_not_found_wait_link_validation_error';
     public static $HELP_CREATE_CHAT_SUCCESS ='help_create_chat_success';
+    public static $HELP_CREATE_CHAT_DUPLICATE ='help_create_chat_duplicate';
     public static $HELP_CHAT_LINK_NOT_VALID ='help_chat_link_not_valid';
     public static $HELP_CREATE_CHAT_REQUEST ='help_chat_not_found_link_not_validated_request';
     public static $HELP_USER_ADDRESS_INPUT = 'user_address_input';
