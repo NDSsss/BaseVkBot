@@ -11,8 +11,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $this->call(StateSeeder::class);
-        $this->call(TriggerWordsSeeder::class);
-        $this->call(PossibleStatesSeeder::class);
+        UsersTableSaver::CREATE_OLD_USERS_TABLE();
+//        $this->call(StateSeeder::class);
     }
 }
