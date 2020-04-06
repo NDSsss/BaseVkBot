@@ -22,8 +22,11 @@ class VkController extends Controller
                     return env('VK_GROUP_SECRET');
                     break;
                 case 'message_new':
-                    $vkMassagesHandler = app(\App\Handlers\VkMessageHandler::class);
-                    $vkMassagesHandler->handleMessageRequest($request);
+                    $objectMessage = $request->input('object')['message'];
+                    if($objectMessage['from_id']===$objectMessage['peer_id']) {
+                        $vkMassagesHandler = app(\App\Handlers\VkMessageHandler::class);
+                        $vkMassagesHandler->handleMessageRequest($request);
+                    }
                     return 'ok';
                     break;
                 default:
@@ -57,6 +60,10 @@ class VkController extends Controller
         });
         $newUsersFromOldArray = $newUsersFromOld->toArray();
         \DB::table('users')->insert($newUsersFromOldArray);
+    }
+
+    public function test(){
+        dd(file_get_contents('php://input'));
     }
 
 }
