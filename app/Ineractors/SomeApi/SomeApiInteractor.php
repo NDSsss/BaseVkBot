@@ -220,9 +220,11 @@ class SomeApiInteractor
             ]
         ];
         $response = $this->client->request('POST', 'Chat/verifyAddress', $configWithQuery);
+        $responseContent = $response->getBody()->getContents();
+        MyLogger::LOG('API Chat/verifyAddress query=' . MyLogger::JSON_ENCODE($configWithQuery) . ' CODE=' . $response->getStatusCode() . ' response= ' . $responseContent);
         switch ($response->getStatusCode()) {
             case 200:
-                $responseObj = json_decode($response->getBody()->getContents());
+                $responseObj = json_decode($responseContent);
                 return [SomeApiIsSubscribedResults::$VERIFY_ADDRESS_SUCCESS, $responseObj->full_address, $responseObj->lat, $responseObj->lng];
             case 204:
                 return [SomeApiIsSubscribedResults::$VERIFY_ADDRESS_FAIL,];
